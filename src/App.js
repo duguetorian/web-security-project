@@ -1,22 +1,58 @@
-import { Routes, Route } from 'react-router';
+import React from 'react';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 import AuthPage from './components/AuthPage';
-import PostLoginTest from './components/PostLoginTest';
+import useAuthContext from './hooks/useAuthContext';
 
 function App() {
   return (
     <div className="App">
-      {/* <Routes>
+      <Routes>
+        <Route path='/' element={<PublicPage />} />
         <Route path='/login' element={<AuthPage />} />
-        <Route path='/protected' element{
+        <Route path='/logged' element={
           <RequireAuth>
-            <PostLoginTest />
+            <LoggedIn />
           </RequireAuth>
-        }
-      </Routes> */}
-      <AuthPage />
+        } />
+        <Route path="*" element={<NTSH />} />
+      </Routes>
+      <Routes />
     </div>
   );
+}
+
+function LoggedIn() {
+  let { user } = useAuthContext()
+  return (
+    <h1>LOGGED IN AS : {user}</h1>
+  )
+}
+
+function PublicPage() {
+  return (
+    <div>
+      <h1>Welcome to Ducking RSS</h1>
+      <Link to="/logged">Login</Link>
+    </div>
+  )
+}
+
+function NTSH() {
+  return (
+    <div>
+      <h1>You're lost there is nothing to see here</h1>
+      <Link to="/">Go back Home</Link>
+    </div>
+  )
+}
+
+function RequireAuth({ children }) {
+  let { user } = useAuthContext();
+  if (!user) {
+    return <Navigate replace to='/login' />;
+  }
+  return <>{children}</>
 }
 
 export default App;
