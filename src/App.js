@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 import AuthPage from './components/AuthPage';
+import NavBar from './components/NavBar';
 import useAuthContext from './hooks/useAuthContext';
 
 function App() {
@@ -25,7 +26,10 @@ function App() {
 function LoggedIn() {
   let { user } = useAuthContext()
   return (
-    <h1>LOGGED IN AS : {user}</h1>
+    <>
+      <NavBar />
+      <h1>LOGGED IN AS : {user}</h1>
+    </>
   )
 }
 
