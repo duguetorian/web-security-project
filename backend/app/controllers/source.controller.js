@@ -47,6 +47,7 @@ async function runPythonScript(link, lastUpdatedAt=null, etag=null) {
   });
 }
 
+<<<<<<< HEAD
 async function checkDocumentExists(model, query) {
   try {
     const result = await model.findOne(query);
