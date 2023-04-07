@@ -40,7 +40,7 @@ function AuthPage() {
     }
 
     function disableSignUp() {
-        if (checkIfPasswordConfirmed() && newUsername != "") {
+        if (checkIfPasswordConfirmed() && newUsername !== "") {
             return false;
         }
         return true;
@@ -54,7 +54,7 @@ function AuthPage() {
     }
 
     function checkIfPasswordConfirmed() {
-        if (newPassword == confPassword != "") {
+        if (newPassword === confPassword && confPassword !== "") {
             return true;
         }
         return false;
@@ -62,7 +62,7 @@ function AuthPage() {
 
     return (
         <>
-            <Segment compact style={{ maxWidth: '450px' }}>
+            <Segment compact style={{ maxWidth: '450px' }} raised>
                 <Grid padded>
                     <Grid.Row>
                         <Grid.Column>
@@ -122,7 +122,6 @@ function AuthPage() {
                     </Grid.Row>
                 </Grid>
             </Segment>
-
         </>
     )
 }

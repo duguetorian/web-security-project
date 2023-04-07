@@ -1,9 +1,12 @@
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
+import useAuthContext from './hooks/useAuthContext';
 import AuthPage from './components/AuthPage';
 import NavBar from './components/NavBar';
-import useAuthContext from './hooks/useAuthContext';
+import ArticlePage from './components/ArticlePage';
+import HomePage from './components/HomePage';
+// import { Input } from 'semantic-ui-react';
 
 function App() {
   return (
@@ -13,7 +16,12 @@ function App() {
         <Route path='/login' element={<AuthPage />} />
         <Route path='/logged' element={
           <RequireAuth>
-            <LoggedIn />
+            <HomePage />
+          </RequireAuth>
+        } />
+        <Route path='/article/:uuid' element={
+          <RequireAuth>
+            <ArticlePage />
           </RequireAuth>
         } />
         <Route path="*" element={<NTSH />} />
@@ -21,16 +29,6 @@ function App() {
       <Routes />
     </div>
   );
-}
-
-function LoggedIn() {
-  let { user } = useAuthContext()
-  return (
-    <>
-      <NavBar />
-      <h1>LOGGED IN AS : {user}</h1>
-    </>
-  )
 }
 
 function PublicPage() {
@@ -56,7 +54,11 @@ function RequireAuth({ children }) {
   if (!user) {
     return <Navigate replace to='/login' />;
   }
-  return <>{children}</>
+  return <>
+    <NavBar>
+      {children}
+    </NavBar>
+  </>
 }
 
 export default App;

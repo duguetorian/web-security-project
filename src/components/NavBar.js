@@ -1,77 +1,164 @@
-import React, { useState } from 'react';
-import { Menu, Header, Dropdown } from 'semantic-ui-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Menu, Header, Dropdown, Accordion, List, Input } from 'semantic-ui-react';
 import duck from '../ressources/dance-dancing-duck.gif';
 import useAuthContext from '../hooks/useAuthContext';
 import { disconnect } from '../js/auth';
+import { addSource, getSources } from '../js/contentApi';
 
-function NavBar() {
-    let [activeItem, setActiveItem] = useState(null)
-    const handleItemClick = (e, { name }) => setActiveItem(name);
 
-    let { setUser, setToken } = useAuthContext();
+function NavBar({ children }) {
+
+    const [activeItem, setActiveItem] = useState(null);
+    const [sourceContent, setSourceContent] = useState([]);
+    const [newSourceLink, setNewSourceLink] = useState("");
+    const [newSourceError, setNewSourceError] = useState(false);
+
+    const handleItemClick = (e, { name }) => {
+        if (activeItem !== name) {
+            setActiveItem(name);
+            return
+        }
+        setActiveItem("");
+    };
+
+    let { username, token, setUser, setToken } = useAuthContext();
+
+    function generateSourceContent(username, token) {
+        setSourceContent(getSources(username, token))
+    }
+
+    function handleNewSource() {
+        setNewSourceError(!addSource(username, token, newSourceLink))
+        generateSourceContent(username, token)
+    }
+
+    useEffect(() => {
+        generateSourceContent(username, token)
+    })
+
+    const menuRef = useRef();
+    const [menuWidth, setMenuWidth] = useState('20vw');
+    useEffect(() => {
+        if (menuRef.current) {
+            setMenuWidth(menuRef.current.children[0].offsetWidth)
+        }
+    }, [menuWidth])
 
     return (
-        <Menu vertical fixed='left' inverted>
-            <Header as="h2" inverted>
-                <img src={duck} style={{ borderRadius: "100px", maxWidth: "200px", margin: "20px" }} alt="logo" />
-                <p>
-                    Ducking RSS
-                </p>
-            </Header>
-            {/* <Menu.Item>
-                <Input icon='search' placeholder='Search...' />
-            </Menu.Item> */}
-            <Menu.Item>
-                <Header as="h3" inverted>
-                    Home
-                </Header>
-                <Menu.Menu>
-                    <Menu.Item
+        <>
+            <div style={{ position: 'fixed' }} ref={menuRef}>
+                <Menu vertical fixed='left' inverted >
+                    <Header as="h2" inverted>
+                        <img src={duck} style={{ borderRadius: "100px", maxWidth: "200px", margin: "20px" }} alt="logo" />
+                        <p>
+                            Ducking RSS
+                        </p>
+                    </Header>
+                    <Menu.Item>
+                        <Header as="h3" inverted>
+                            Home
+                        </Header>
+                        <Menu.Menu>
+                            {/* <Menu.Item
                         name='communities'
                         onClick={handleItemClick}
                         active={activeItem === "communities"}
-                    />
-                    <Menu.Item
-                        name='content'
-                        onClick={handleItemClick}
-                        active={activeItem === "content"}
-                    />
-                </Menu.Menu>
-            </Menu.Item>
-            <Menu.Item>
-                <Header as="h3" inverted>
-                    Browse
-                </Header>
-                <Menu.Menu>
-                    <Menu.Item
+                        >
+                        <Accordion inverted fluid>
+                        <Accordion.Title
+                        active={activeItem === "communities"}
+                        index={0}
+                        onClick={handleItemClick}>
+                        Communities
+                        </Accordion.Title>
+                        <Accordion.Content>
+                        test
+                        </Accordion.Content>
+                        </Accordion>
+                    </Menu.Item> */}
+                            <Menu.Item
+                                name='source'
+                            >
+                                <Accordion inverted>
+                                    <Accordion.Title
+                                        name="source"
+                                        onClick={handleItemClick}
+                                    >
+                                        Source
+                                    </Accordion.Title>
+                                    <Accordion.Content content={
+                                        <List divided inverted >
+                                            {sourceContent.map((content) => (
+                                                <List.Item as="a" key={content.id}>{content.name}</List.Item>
+                                            ))}
+                                        </List>
+                                    } active={activeItem === "source"}
+                                        style={{ maxHeight: '40vh', overflowY: 'auto' }} />
+                                </Accordion>
+                            </Menu.Item>
+                        </Menu.Menu>
+                    </Menu.Item>
+                    <Menu.Item>
+                        <Header as="h3" inverted>
+                            Browse
+                        </Header>
+                        <Menu.Menu>
+                            {/* <Menu.Item
                         name='discover'
                         onClick={handleItemClick}
                         active={activeItem === "discover"}
-                    />
-                    <Menu.Item
-                        name='add'
-                        onClick={handleItemClick}
-                        active={activeItem === "add"}
-                    />
-                </Menu.Menu>
-            </Menu.Item>
-            <Menu.Item>
-                <Header as="h3" inverted>
-                    Settings
-                </Header>
-                <Menu.Menu inverted>
-                    <Menu.Item inverted>
-                        <Dropdown text='Languages' options={[{ key: 1, text: 'English', value: 1 }]} />
+                    /> */}
+                            <Menu.Item
+                                name='add'
+                            >
+                                <Accordion inverted>
+                                    <Accordion.Title
+                                        name="add"
+                                        onClick={handleItemClick}
+                                    >
+                                        Add
+                                    </Accordion.Title>
+                                    <Accordion.Content
+                                        active={activeItem === "add"}
+                                    >
+                                        <Input
+                                            placeholder='http://my.rss.link.com'
+                                            transparent
+                                            inverted
+                                            size='small'
+                                            value={newSourceLink}
+                                            onChange={({ target }) => setNewSourceLink(target.value)}
+                                            action={{ icon: 'plus', onClick: handleNewSource, size: 'mini', inverted: true }}
+                                        />
+                                        <span>{newSourceError}</span>
+                                        {newSourceError && <span style={{ color: 'red' }}>You must enter a valid url</span>}
+                                    </Accordion.Content>
+                                </Accordion>
+                            </Menu.Item>
+                        </Menu.Menu>
                     </Menu.Item>
-                    <Menu.Item
-                        name='disconnect'
-                        onClick={() => disconnect(setUser, setToken)}
-                        inverted>
-                        <span style={{ color: 'red ' }}>Disconnect</span>
+                    <Menu.Item>
+                        <Header as="h3" inverted>
+                            Settings
+                        </Header>
+                        <Menu.Menu inverted>
+                            <Menu.Item inverted>
+                                <Dropdown text='Languages' options={[{ key: 1, text: 'English', value: 1 }]} />
+                            </Menu.Item>
+                            <Menu.Item
+                                name='disconnect'
+                                onClick={() => disconnect(setUser, setToken)}
+                                inverted>
+                                <span style={{ color: 'red ' }}>Disconnect</span>
+                            </Menu.Item>
+                        </Menu.Menu>
                     </Menu.Item>
-                </Menu.Menu>
-            </Menu.Item>
-        </Menu>
+                </Menu>
+            </div>
+            <div style={{ marginLeft: menuWidth }}>
+                {children}
+            </div>
+        </>
     )
 }
 

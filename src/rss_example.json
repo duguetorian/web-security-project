@@ -1,0 +1,15 @@
+{
+    "title": "W3Schools Home Page",
+    "link": "https://www.w3schools.com",
+    "description": "Free web building tutorials",
+    "image": {
+        "url": "https://www.at-languagesolutions.com/fr/wp-content/uploads/2016/06/http-1.jpg",
+        "title": "W3Schools.com",
+        "link": "https://www.w3schools.com"
+    },
+    "item": {
+        "title": "RSS tutorial",
+        "link": "https://www.w3schools.com/xml/xml_rss.asp",
+        "description": "New RSS tutorial on W3Schools"
+    }
+}

@@ -6,6 +6,8 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
+  background-image: url('./ressources/background.avif');
+  overscroll-behavior: none;
 }
 
 .App-logo {
@@ -15,4 +17,8 @@
 
 .App-link {
   color: #61dafb;
+}
+
+.Segment {
+  background-color: #f0dfbc;
 }
