@@ -36,7 +36,7 @@ async function runPythonScript() {
   });
 }
 
-// Create and Save a new Tutorial
+// Create and Save a new Source
 exports.create = async (req, res) => {
 
   // TODO  : Validate request
@@ -125,7 +125,7 @@ exports.update = (req, res) => {
     .then(data => {
       if (!data) {
         res.status(404).send({
-          message: `Cannot update Source with id=${id}. Maybe Tutorial was not found!`
+          message: `Cannot update Source with id=${id}. Maybe Source was not found!`
         });
       } else res.send({ message: "Source was updated successfully." });
     })

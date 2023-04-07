@@ -3,14 +3,19 @@ module.exports = app => {
   
     var router = require("express").Router();
 
-    // TODO: Get a single Source with id
+    
+
+    // Get a single Article with id
     router.get("/:id", articles.findOne);
 
-    // TODO: Update a single Source with id
+    // Update a single Article with id
     router.post("/:id", articles.update);
 
-    // TODO: Delete a Source with id
+    // Delete a Article with id
     router.delete("/:id", articles.delete);
+
+    // Get articles from source
+    router.get("/source/:id", articles.findFromSource);
 
     app.use('/api/article', router);
 }
