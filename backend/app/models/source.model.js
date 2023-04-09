@@ -1,10 +1,17 @@
 module.exports = mongoose => {
     var schema = mongoose.Schema(
         {
-            title: String,
+            title: {
+                type: String,
+                unique: true
+            },
             description: String,
-            url : String,
-            etag: String
+            link : {
+                type: String,
+                unique: true
+            },
+            etag: String,
+            version: String
         },
         { timestamps: true }
     );

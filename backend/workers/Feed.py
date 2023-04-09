@@ -29,7 +29,7 @@ class Feed:
     
     def add_article(self, id:int, link:str, title:str, description:str, publishedAt:str, updatedAt:str):
         self.data["articles"].append({
-            "id": id,
+            "feedId": id,
             "link": link,
             "title": title,
             "description": description,

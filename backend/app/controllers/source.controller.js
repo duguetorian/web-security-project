@@ -1,11 +1,12 @@
 const db = require("../models");
 const Source = db.sources;
+const Article = db.articles;
 
 const {spawn} = require("child_process");
 
-async function runPythonScript() {
+async function runPythonScript(link) {
   return new Promise((resolve, reject) => {
-    const child = spawn('python3', ['workers/workerRSS.py']);
+    const child = spawn('python3', ['workers/workerRSS.py', '-l', link]);
 
     let dataBuffer = '';
     child.stdout.on('data', (data) => {
@@ -18,16 +19,13 @@ async function runPythonScript() {
 
     child.on('close', (code) => {
       if (code !== 0) {
-        console.error(`Python script workers/workerRSS.py exited with code ${code}`);
-        //reject(`Python script exited with code ${code}`);
+        console.error(`Python script workers/workerRSS.py exited with code ${code} for request to ${link}`);
         resolve({error:1});
       } else {
         try {
           const result = JSON.parse(dataBuffer);
-          result["error"] = 0;
           resolve(result);
         } catch (err) {
-          //reject(`Failed to parse JSON from Python script: ${err}`);
           console.error(`Failed to parse JSON from Python script: ${err}`);
           resolve({error:2});
         }
@@ -36,30 +34,71 @@ async function runPythonScript() {
   });
 }
 
+async function checkDocumentExists(model, query) {
+  try {
+    const result = await model.findOne(query);
+    if (result) {
+      return 0; // document exists
+    } else {
+      return 1; // document does not exist
+    }
+  } catch (error) {
+    return 2; // error occurred, document does not exist
+  }
+}
+
 // Create and Save a new Source
 exports.create = async (req, res) => {
 
   // TODO  : Validate request
 
-  const result = await runPythonScript();
+  const link = req.body.link;
+
+  const querySourceExist = { link: link };
+  const sourceExists = await checkDocumentExists(Source, querySourceExist);
+
+  if (sourceExists == 2){
+    return res.status(500).send({
+      message: error.message || "An error occurred while checking the source."
+    });
+  }
+  if (sourceExists == 0){
+    return res.status(409).send({
+      message: "The source already exists."
+    });
+  }
+
+  // The source does not exist in the database
+  const result = await runPythonScript(link);
     
   // Handle process completion
   if (result["error"] === 0) {
-    // Send the result back to the client
-    const source = new Source({
-      title: result['data']['title'],
-      description: result['data']['descriptions'],
-      url : result['data']['url'],
-      etag: result['data']['etag'],
-      createdAt : result['data']['updatedAt']
-    });
-    console.debug("data sent");
+
+    const source = new Source(result.source);
 
     // Save Source in the database
     source
     .save(source)
-    .then(data => {
-      res.send(data);
+    .then(savedSource => {
+      console.log("Source saved to the database:", savedSource);
+
+      // Save articles in the database
+      const articles = result.articles.map(articleData => {
+        const article = new Article(articleData);
+        article.sourceId = savedSource._id;
+        return article.save();
+      });
+      Promise.all(articles)
+      .then(savedArticles => {
+        console.log("Articles saved to the database:", savedArticles);
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Error saving articles to the database."
+        });
+      });
     })
     .catch(err => {
       res.status(500).send({
@@ -71,7 +110,7 @@ exports.create = async (req, res) => {
     res.status(500).send({
       message: "Failed to create source"
     });
-  } 
+  }
 };
 
 // Retrieve all Source from the database.

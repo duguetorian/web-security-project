@@ -3,9 +3,14 @@ module.exports = mongoose => {
         {
             title: String,
             description: String,
-            url : String,
-            sourceId : Number,
-            read: Number
+            link: String,
+            sourceId: String,
+            feedId: String,
+            read: {
+                type: Boolean,
+                default: false
+            },
+            publishedAt: Date
         },
         { timestamps: true }
     );

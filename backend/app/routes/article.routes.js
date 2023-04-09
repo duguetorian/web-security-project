@@ -3,8 +3,6 @@ module.exports = app => {
   
     var router = require("express").Router();
 
-    
-
     // Get a single Article with id
     router.get("/:id", articles.findOne);
 
