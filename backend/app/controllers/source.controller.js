@@ -4,9 +4,20 @@ const Article = db.articles;
 
 const {spawn} = require("child_process");
 
-async function runPythonScript(link) {
+async function runPythonScript(link, lastUpdatedAt=null, etag=null) {
   return new Promise((resolve, reject) => {
-    const child = spawn('python3', ['workers/workerRSS.py', '-l', link]);
+
+    let arguments = ['workers/workerRSS.py', '-l', link];
+    if (lastUpdatedAt) {
+      arguments.push("-d");
+      arguments.push(lastUpdatedAt);
+    }
+    if (etag) {
+      arguments.push("-e");
+      arguments.push(etag);
+    }
+    console.debug({arguments});
+    const child = spawn('python3', arguments);
 
     let dataBuffer = '';
     child.stdout.on('data', (data) => {
@@ -20,14 +31,17 @@ async function runPythonScript(link) {
     child.on('close', (code) => {
       if (code !== 0) {
         console.error(`Python script workers/workerRSS.py exited with code ${code} for request to ${link}`);
-        resolve({error:1});
+        resolve({error:2});
       } else {
         try {
-          const result = JSON.parse(dataBuffer);
+          let result = JSON.parse(dataBuffer);
+          if (!lastUpdatedAt && !etag) { // It is a new source.
+            result["source"]["link"] = link;
+          }
           resolve(result);
         } catch (err) {
           console.error(`Failed to parse JSON from Python script: ${err}`);
-          resolve({error:2});
+          resolve({error:3});
         }
       }
     });
@@ -55,6 +69,12 @@ exports.create = async (req, res) => {
   const link = req.body.link;
 
   const querySourceExist = { link: link };
+  if (!querySourceExist) {
+    console.log("no link given in create().")
+    return res.status(500).send({
+      message: error.message || "Cannot create source"
+    });
+  }
   const sourceExists = await checkDocumentExists(Source, querySourceExist);
 
   if (sourceExists == 2){
@@ -196,5 +216,80 @@ exports.delete = (req, res) => {
         message: "Could not delete Source with id=" + id
       });
     });
-  
 };
+
+// Refresh the source and try to have a new request
+exports.refresh = async (req, res) => {
+  const sourceId = req.body.id;
+
+  const source = await Source.findById(sourceId); // TODO: add error if no source found.
+  if (source){
+    const result = await runPythonScript(link=source.link, modified=source.updatedAt.toISOString(), etag=source.etag);
+
+    if (result["error"] == 0) {
+
+      if (result["status"] == 301) { // Move permanently
+        Source.findByIdAndUpdate(sourceId, { link: result["source"]["link"] }, { useFindAndModify: false })
+        .then(data => {
+          if (!data) {
+            res.status(404).send({
+              message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
+            });
+          } else {
+            console.log(`Source ${sourceId} successfully updated its link to ${result["source"]["link"]}.`);
+          }
+        })
+        .catch(err => {
+          res.status(500).send({
+            message: "Error updating Source with id=" + sourceId
+          });
+        });
+      }
+      if (200 <= result["status"] < 400) { // Success to retrieve data from source
+        const articles = result.articles.map(articleData => {
+          return Article.findOneAndUpdate(
+            { feedId: articleData["feedId"] }, 
+            articleData, 
+            { new: true, upsert: true }
+          )
+          .then(article => {
+            if (!article) { // article not found in database
+              let newArticle = new Article(articleData);
+              newArticle.sourceId = sourceId;
+              return newArticle.save();
+            }
+            articleData.createdAt = article.createdAt;
+            return article;
+          }).catch(err => {
+            console.error("Error updating or saving article", err);
+          });
+        });
+        Promise.all(articles)
+        .then(savedArticles => {
+          console.log("Articles saved to the database:", savedArticles);
+
+          res.send(result);
+        })
+        .catch(err => {
+          res.status(500).send({
+            message: "Error saving articles to the database."
+          });
+        });
+      }
+      else {
+        res.status(500).send({
+          message: `Status ${result["status"]} receveived from source ${sourceId}. Cannot update source.`
+        });
+      }
+    } else {
+      res.status(500).send({
+        message: `Error ${result["error"]} raised while updating source ${sourceId}.`
+      });
+    }
+  }
+  else {
+    res.status(404).send({
+      message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
+    });
+  }
+}

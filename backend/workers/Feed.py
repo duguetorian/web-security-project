@@ -65,9 +65,6 @@ class Feed:
         if "etag" in raw_data:
             self.data["source"]["etag"] = raw_data.etag
 
-        # Source link
-        self.data["source"]["link"] = raw_data.href
-
         # Source version
         if "version" in raw_data:
             self.data["source"]["version"] = raw_data.version
