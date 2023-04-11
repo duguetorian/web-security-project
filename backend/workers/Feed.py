@@ -69,6 +69,10 @@ class Feed:
         if "version" in raw_data:
             self.data["source"]["version"] = raw_data.version
 
+        # Source updated date
+        if "updated_parsed" in raw_data:
+            self.data["source"]["updatedAt"] = Feed.format_datetime(raw_data["updated_parsed"])
+
         if "entries" in raw_data:
             entries = raw_data["entries"]
             n = len(entries)

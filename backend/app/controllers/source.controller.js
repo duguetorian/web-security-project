@@ -89,11 +89,14 @@ exports.create = async (req, res) => {
   }
 
   // The source does not exist in the database
-  const result = await runPythonScript(link);
+  let result = await runPythonScript(link);
     
   // Handle process completion
   if (result["error"] === 0) {
 
+    if (result["status"] == 410) {
+      result.source["status"] = "gone";
+    }
     const source = new Source(result.source);
 
     // Save Source in the database
@@ -223,28 +226,33 @@ exports.refresh = async (req, res) => {
   const sourceId = req.body.id;
 
   const source = await Source.findById(sourceId); // TODO: add error if no source found.
-  if (source){
+  if (source && source.status != "gone"){
     const result = await runPythonScript(link=source.link, modified=source.updatedAt.toISOString(), etag=source.etag);
 
     if (result["error"] == 0) {
 
+      let updatedSource = { updatedAt:  result["source"]["updatedAt"]}
+
       if (result["status"] == 301) { // Move permanently
-        Source.findByIdAndUpdate(sourceId, { link: result["source"]["link"] }, { useFindAndModify: false })
-        .then(data => {
-          if (!data) {
-            res.status(404).send({
-              message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
-            });
-          } else {
-            console.log(`Source ${sourceId} successfully updated its link to ${result["source"]["link"]}.`);
-          }
-        })
-        .catch(err => {
-          res.status(500).send({
-            message: "Error updating Source with id=" + sourceId
-          });
-        });
+        updatedSource["link"] = result["source"]["link"];
       }
+      // Update source
+      Source.findByIdAndUpdate(sourceId, updatedSource, { useFindAndModify: false })
+      .then(data => {
+        if (!data) {
+          res.status(404).send({
+            message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
+          });
+        } else {
+          console.log(`Source ${sourceId} successfully updated its link to ${result["source"]["link"]}.`);
+        }
+      })
+      .catch(err => {
+        res.status(500).send({
+          message: "Error updating Source with id=" + sourceId
+        });
+      });
+      
       if (200 <= result["status"] < 400) { // Success to retrieve data from source
         const articles = result.articles.map(articleData => {
           return Article.findOneAndUpdate(
@@ -267,7 +275,6 @@ exports.refresh = async (req, res) => {
         Promise.all(articles)
         .then(savedArticles => {
           console.log("Articles saved to the database:", savedArticles);
-
           res.send(result);
         })
         .catch(err => {
