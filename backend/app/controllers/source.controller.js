@@ -146,7 +146,12 @@ exports.create = async (req, res) => {
   // TODO  : Validate request
 
   const link = req.body.link;
-
+  if (!link) {
+    console.error("Error in the payload, no link given to connect a new source.")
+    return res.status(500).send({
+      message: error.message || "Error in the payload, no link given to connect a new source."
+    });
+  }
   const querySourceExist = { link: link };
   if (!querySourceExist) {
     console.log("no link given in create().")
