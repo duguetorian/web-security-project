@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
-import useAuthContext from './hooks/useAuthContext';
+import useAuthToken from './hooks/useAuthToken';
 import AuthPage from './components/AuthPage';
 import NavBar from './components/NavBar';
 import ArticlePage from './components/ArticlePage';
@@ -50,8 +50,8 @@ function NTSH() {
 }
 
 function RequireAuth({ children }) {
-  let { user } = useAuthContext();
-  if (!user) {
+  let { authToken } = useAuthToken();
+  if (!authToken?.user) {
     return <Navigate replace to='/login' />;
   }
   return <>

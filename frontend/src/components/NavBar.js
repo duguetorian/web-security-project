@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Menu, Header, Dropdown, Accordion, List, Input } from 'semantic-ui-react';
 import duck from '../ressources/dance-dancing-duck.gif';
-import useAuthContext from '../hooks/useAuthContext';
+import useAuthContext from '../hooks/useAuthToken';
 import { disconnect } from '../js/auth';
 import { addSource, getSources } from '../js/contentApi';
 
@@ -21,19 +21,19 @@ function NavBar({ children }) {
         setActiveItem("");
     };
 
-    let { username, token, setUser, setToken } = useAuthContext();
+    let { authToken, setAuthToken } = useAuthContext();
 
     function generateSourceContent(username, token) {
         setSourceContent(getSources(username, token))
     }
 
     function handleNewSource() {
-        setNewSourceError(!addSource(username, token, newSourceLink))
-        generateSourceContent(username, token)
+        setNewSourceError(!addSource(authToken.user, authToken.token, newSourceLink))
+        generateSourceContent(authToken.user, authToken.token)
     }
 
     useEffect(() => {
-        generateSourceContent(username, token)
+        generateSourceContent(authToken.user, authToken.token)
     })
 
     const menuRef = useRef();
@@ -51,7 +51,7 @@ function NavBar({ children }) {
                     <Header as="h2" inverted>
                         <img src={duck} style={{ borderRadius: "100px", maxWidth: "200px", margin: "20px" }} alt="logo" />
                         <p>
-                            Ducking RSS
+                            Welcome {authToken.user} to Ducking RSS
                         </p>
                     </Header>
                     <Menu.Item>
@@ -147,7 +147,7 @@ function NavBar({ children }) {
                             </Menu.Item>
                             <Menu.Item
                                 name='disconnect'
-                                onClick={() => disconnect(setUser, setToken)}
+                                onClick={() => disconnect(setAuthToken)}
                                 inverted>
                                 <span style={{ color: 'red ' }}>Disconnect</span>
                             </Menu.Item>
