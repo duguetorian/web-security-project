@@ -146,15 +146,14 @@ exports.create = async (req, res) => {
   // TODO  : Validate request
 
   const link = req.body.link;
-
-  const querySourceExist = { link: link };
-  if (!querySourceExist) {
-    console.log("no link given in create().")
+  if (!link) {
+    console.error("Error in the payload, no link given to connect a new source.")
     return res.status(500).send({
-      message: error.message || "Cannot create source"
+      message: error.message || "Error in the payload, no link given to connect a new source."
     });
   }
-  const sourceExists = await checkDocumentExists(Source, querySourceExist);
+  
+  const sourceExists = await checkDocumentExists(Source, { link: link });
 
   if (sourceExists == 2){
     return res.status(500).send({
