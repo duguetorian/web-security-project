@@ -5,11 +5,14 @@ module.exports = app => {
     
     // TODO  : Validate request in all methods
 
-    // TODO (ADD REAL MODIFICATION) : Create a new Source
+    // Create a new Source
     router.post("/", sources.create);
 
     // Get all Sources
     router.get("/", sources.findAll);
+
+    // Refresh the source and try to have a new request
+    router.post("/refresh", sources.refresh);
 
     // Update a single Source with id 
     router.post("/:id", sources.update);
@@ -17,7 +20,7 @@ module.exports = app => {
     // Delete a Source with id
     router.delete("/:id", sources.delete);
 
-    // Get a single Source with id (TODO : ADD MODIFICATION AND DATA RETRIEVE FROM FEED)
+    // Get a single Source with id
     router.get("/:id", sources.findOne);
 
     app.use('/api/source', router);

@@ -65,12 +65,13 @@ class Feed:
         if "etag" in raw_data:
             self.data["source"]["etag"] = raw_data.etag
 
-        # Source link
-        self.data["source"]["link"] = raw_data.href
-
         # Source version
         if "version" in raw_data:
             self.data["source"]["version"] = raw_data.version
+
+        # Source updated date
+        if "updated_parsed" in raw_data:
+            self.data["source"]["updatedAt"] = Feed.format_datetime(raw_data["updated_parsed"])
 
         if "entries" in raw_data:
             entries = raw_data["entries"]

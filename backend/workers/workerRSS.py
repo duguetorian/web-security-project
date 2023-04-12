@@ -16,16 +16,12 @@ def getFeed(link:str, modified:str, etag:str) -> feedparser:
 
 def process(raw_data:feedparser) -> Feed:
     feed = Feed(raw_data.status)
-    if raw_data.status < 400:
+    if 200 <= raw_data.status < 400:
         if raw_data.status == HTTPStatus.NOT_MODIFIED: # 304
-            pass
-        if raw_data.status == HTTPStatus.MOVED_PERMANENTLY: # 301 New permanent address
+            return feed
+        if raw_data.status == HTTPStatus.MOVED_PERMANENTLY: # 301 New permanent address:
             feed.add_link(raw_data.href)
-            feed.scrap_data(raw_data)
-        if raw_data.status == HTTPStatus.FOUND: # 302 New temporary address
-            feed.scrap_data(raw_data)
-        if raw_data.status == HTTPStatus.OK :# 200
-            feed.scrap_data(raw_data)
+    feed.scrap_data(raw_data)
     return feed
 
 def check_url(url:str) -> str:

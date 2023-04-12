@@ -3,15 +3,22 @@ module.exports = mongoose => {
         {
             title: {
                 type: String,
-                unique: true
+                unique: true,
             },
             description: String,
             link : {
                 type: String,
-                unique: true
+                unique: true,
+                require: true
             },
             etag: String,
-            version: String
+            version: String,
+            status: {
+                type: String,
+                enum: ["active", "inactive", "gone"],
+                default: "active",
+                require: true
+            }
         },
         { timestamps: true }
     );
