@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Segment, Header, Grid, Form, Button, Modal } from 'semantic-ui-react';
-import useAuthContext from '../hooks/useAuthContext';
+import useAuthToken from '../hooks/useAuthToken';
 import { authenticate } from '../js/auth';
 import duck from '../ressources/dance-dancing-duck.gif';
 
@@ -25,17 +25,17 @@ function AuthPage() {
     let [newPassword, setNewPassword] = useState("");
     let [confPassword, setConfPassword] = useState("");
 
-    let { setUser, setToken } = useAuthContext();
+    let { authToken, setAuthToken } = useAuthToken();
     const navigate = useNavigate();
 
     function handleSubmitAuth(event) {
-        authenticate(username, password, setUser, setToken);
+        authenticate(username, password, setAuthToken);
         navigate('/logged', { replace: true });
     }
 
     function handleSubmitSignUp(event) {
         // To change to sign up route
-        authenticate(username, password, setUser, setToken);
+        authenticate(username, password, setAuthToken);
         handleCLoseModale();
     }
 
