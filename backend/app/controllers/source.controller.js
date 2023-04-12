@@ -16,7 +16,6 @@ async function runPythonScript(link, lastUpdatedAt=null, etag=null) {
       arguments.push("-e");
       arguments.push(etag);
     }
-    console.debug({arguments});
     const child = spawn('python3', arguments);
 
     let dataBuffer = '';
@@ -58,6 +57,86 @@ async function checkDocumentExists(model, query) {
     }
   } catch (error) {
     return 2; // error occurred, document does not exist
+  }
+}
+
+async function refreshSource(sourceId) {
+  const source = await Source.findById(sourceId); // TODO: add error if no source found.
+  if (source && source.status != "gone"){
+    const result = await runPythonScript(link=source.link, modified=source.updatedAt.toISOString(), etag=source.etag);
+    console.debug(result.source, result.status, result.articles.length);
+    if (result["error"] == 0) {
+
+      let updatedSource = { updatedAt:  result["source"]["updatedAt"]}
+
+      if (result["status"] == 301) { // Move permanently
+        updatedSource["link"] = result["source"]["link"];
+      }
+      if (result["status"] == 410) { // Source not available anymore
+        updatedSource["status"] = "gone";
+      }
+      // Update source
+      Source.findByIdAndUpdate (sourceId, updatedSource, { useFindAndModify: false })
+      .then(data => {
+        if (!data) {
+          console.error(`Cannot update Source with id=${sourceId}. Maybe Source was not found!`);
+          return { success: 404, title: source.title, id: source.id};
+        } else {
+          console.log(`Source ${sourceId} successfully updated.`);
+        }
+      })
+      .catch(err => {
+        console.error(`Error updating Source with id=${sourceId}`);
+        return { success: 500, title: source.title, id: source.id }
+      });
+
+      if (result["articles"].length == 0) {
+        return { success: 200, title: source.title, id: source.id};
+      }
+      
+      if (200 <= result["status"] < 400) { // Success to retrieve data from source
+        const articles = result.articles.map(articleData => {
+          return Article.findOneAndUpdate(
+            { feedId: articleData["feedId"] }, 
+            articleData, 
+            { new: true, upsert: true }
+          )
+          .then(article => {
+            if (!article) { // article not found in database
+              let newArticle = new Article(articleData);
+              newArticle.sourceId = sourceId;
+              return newArticle.save();
+            }
+            articleData.createdAt = article.createdAt;
+            return article;
+          }).catch(err => {
+            console.error("Error updating or saving article", err);
+          });
+        });
+        Promise.all(articles)
+        .then(savedArticles => {
+          console.log("Articles saved to the database:", savedArticles);
+          return { success: 200, title: source.title, id: source.id};
+        })
+        .catch(err => {
+          console.error("Error saving articles to the database.");
+          return { success: 500, title: source.title, id: source.id }
+        });
+        return { success: 200, title: source.title, id: source.id };
+      }
+      else {
+        console.error(`Status ${result["status"]} receveived from source ${sourceId}. Cannot update source.`);
+        return { success: 500, title: source.title, id: source.id }
+      }
+    } 
+    else {
+      console.error(`Error ${result["error"]} raised while updating source ${sourceId}.`);
+      return { success: 500, title: source.title, id: source.id }
+    }
+  }
+  else {
+    console.error( `Cannot update Source with id=${sourceId}. Source was not found.`);
+    return { success: 404 }
   }
 }
 
@@ -223,80 +302,24 @@ exports.delete = (req, res) => {
 
 // Refresh the source and try to have a new request
 exports.refresh = async (req, res) => {
-  const sourceId = req.body.id;
 
-  const source = await Source.findById(sourceId); // TODO: add error if no source found.
-  if (source && source.status != "gone"){
-    const result = await runPythonScript(link=source.link, modified=source.updatedAt.toISOString(), etag=source.etag);
+  const sourceIds = req.body.sourceIds;
 
-    if (result["error"] == 0) {
+  if (!sourceIds || !Array.isArray(sourceIds)) {
+    console.error("Error in 'sourceIds' field.");
+    res.status(404).send({
+      message: "Error in 'sourceIds' field."
+    });
+    return;
+  }
+  const response = [];
 
-      let updatedSource = { updatedAt:  result["source"]["updatedAt"]}
-
-      if (result["status"] == 301) { // Move permanently
-        updatedSource["link"] = result["source"]["link"];
-      }
-      // Update source
-      Source.findByIdAndUpdate(sourceId, updatedSource, { useFindAndModify: false })
-      .then(data => {
-        if (!data) {
-          res.status(404).send({
-            message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
-          });
-        } else {
-          console.log(`Source ${sourceId} successfully updated its link to ${result["source"]["link"]}.`);
-        }
-      })
-      .catch(err => {
-        res.status(500).send({
-          message: "Error updating Source with id=" + sourceId
-        });
-      });
-      
-      if (200 <= result["status"] < 400) { // Success to retrieve data from source
-        const articles = result.articles.map(articleData => {
-          return Article.findOneAndUpdate(
-            { feedId: articleData["feedId"] }, 
-            articleData, 
-            { new: true, upsert: true }
-          )
-          .then(article => {
-            if (!article) { // article not found in database
-              let newArticle = new Article(articleData);
-              newArticle.sourceId = sourceId;
-              return newArticle.save();
-            }
-            articleData.createdAt = article.createdAt;
-            return article;
-          }).catch(err => {
-            console.error("Error updating or saving article", err);
-          });
-        });
-        Promise.all(articles)
-        .then(savedArticles => {
-          console.log("Articles saved to the database:", savedArticles);
-          res.send(result);
-        })
-        .catch(err => {
-          res.status(500).send({
-            message: "Error saving articles to the database."
-          });
-        });
-      }
-      else {
-        res.status(500).send({
-          message: `Status ${result["status"]} receveived from source ${sourceId}. Cannot update source.`
-        });
-      }
-    } else {
-      res.status(500).send({
-        message: `Error ${result["error"]} raised while updating source ${sourceId}.`
-      });
+  for (let i = 0; i < sourceIds.length; i++) {
+    let refreshedSourceOutput = await refreshSource(sourceIds[i]);
+    console.debug(refreshedSourceOutput);
+    if (refreshedSourceOutput.success != 404) {
+      response.push(refreshedSourceOutput);
     }
   }
-  else {
-    res.status(404).send({
-      message: `Cannot update Source with id=${sourceId}. Maybe Source was not found!`
-    });
-  }
+  res.send({result: response});
 }
