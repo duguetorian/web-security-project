@@ -1,11 +1,10 @@
-export const authenticate = (username, password, setUser, setToken) => {
-    setUser(username);
-    setToken("not implemented");
+export const authenticate = (username, password, setAuthToken) => {
+    setAuthToken({ user: username, token: 'not implemented'})
     return "success"
 }
 
-export const disconnect = (setUser, setToken) => {
-    setUser(null);
-    setToken(null);
+export const disconnect = (setAuthToken) => {
+    setAuthToken({ user: null, token: null})
+    window.location.reload(true);
     return "success"
 }

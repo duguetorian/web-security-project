@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getLastArticles } from '../js/contentApi';
 import ArticlePresentation from './ArticlePresentation';
 import { Pagination } from 'semantic-ui-react';
-import useAuthContext from '../hooks/useAuthContext';
+import useAuthToken from '../hooks/useAuthToken';
 
 function HomePage() {
     const pageSize = 5;
@@ -10,9 +10,9 @@ function HomePage() {
     const [numberOfPages, setNumberOfPages] = useState(1);
     const [lastArticles, setLastArticles] = useState([]);
 
-    const { username, token } = useAuthContext();
+    const { authToken } = useAuthToken();
     useEffect(() => {
-        const response =  getLastArticles(username, token, pageSize);
+        const response =  getLastArticles(authToken.username, authToken.token, pageSize);
         setLastArticles(response.lastArticles);
         setNumberOfPages(response.numberOfPages)
     }, [])
