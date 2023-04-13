@@ -3,7 +3,6 @@ module.exports = mongoose => {
         {
             username: String,
             password: String,
-            salt: String,
             sources: Array,
         },
         { timestamps: true }
@@ -13,6 +12,6 @@ module.exports = mongoose => {
         object.id = _id;
         return object;
     });
-    const User = mongoose.model("user", schema);
-    return User;
+    const user = mongoose.model("user", schema);
+    return user;
 }
