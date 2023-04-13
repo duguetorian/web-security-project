@@ -9,5 +9,11 @@ module.exports = app => {
     // Create a user
     router.post("/create", user.create);
 
+    // See users
+    router.get("/", user.test);
+
+    // Verify the token
+    router.get("/token", user.token);
+
     app.use('/api/user', router);
 }
