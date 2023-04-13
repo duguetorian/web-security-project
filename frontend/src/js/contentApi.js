@@ -1,5 +1,7 @@
 import data from '../rss_example.json';
+import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL;
 
 let sourceContent = [
     { name: "Source#1", id: "1" },
@@ -53,15 +55,23 @@ let sourceContent = [
 ]
 
 
-export const getSources = (username, token) => {
+export const getSources = async (username, token) => {
+    const response = await axios.get(`${API_URL}/api/user/sources`, { headers: { authorization: token, username } }).then(response => {
+        console.log('RESPONSE SOURCES: ', response)
+        return response;
+    }).catch(error => console.log('ERROR SOURCES: ', error.response))
+    return response.data;
     return sourceContent;
 }
 
-export const addSource = (username, token, link) => {
+export const addSource = async (username, token, link) => {
+    const headers = { username, authorization: token };
     try {
         let domain = new URL(link)
-        sourceContent.push({ name: domain.hostname, id: domain.hostname })
-        return true
+        const response = await axios.post(`${API_URL}/api/source/`, { link }, { headers }).then(response => {
+            return response;
+        })
+        return response
     } catch (error) {
         return false
     }
@@ -69,5 +79,5 @@ export const addSource = (username, token, link) => {
 
 export const getLastArticles = (username, token, range) => {
     const numberOfPages = 5;
-    return {lastArticles : Array(range).fill(data), numberOfPages}
+    return { lastArticles: Array(range).fill(data), numberOfPages }
 }
