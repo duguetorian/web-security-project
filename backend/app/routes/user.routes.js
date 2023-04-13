@@ -9,6 +9,9 @@ module.exports = app => {
     // Create a user
     router.post("/create", user.create);
 
+    // Get all sources linked to user
+    router.get("/sources", user.getSources)
+
     // See users
     router.get("/", user.test);
 

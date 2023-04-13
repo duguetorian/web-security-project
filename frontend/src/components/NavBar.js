@@ -21,15 +21,21 @@ function NavBar({ children }) {
         setActiveItem("");
     };
 
-    let { authToken, setAuthToken } = useAuthContext();
+    const { authToken, setAuthToken } = useAuthContext();
 
-    function generateSourceContent(username, token) {
-        setSourceContent(getSources(username, token))
+    async function generateSourceContent(username, token) {
+        setSourceContent(await getSources(username, token))
     }
 
     function handleNewSource() {
-        setNewSourceError(!addSource(authToken.user, authToken.token, newSourceLink))
-        generateSourceContent(authToken.user, authToken.token)
+        const newSource = addSource(authToken.user, authToken.token, newSourceLink)
+        if (!newSource) {
+            setNewSourceError(true);
+            return;
+        }
+        generateSourceContent(authToken.user, authToken.token);
+        setNewSourceLink("");
+        setActiveItem("source")
     }
 
     useEffect(() => {

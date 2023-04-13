@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const token = require('../helpers/token');
 const User = db.user;
+const Sources = db.sources;
 const JWT_SECRET = process.env.JWT;
 
 const verifyUserLogin = async (username, password) => {
@@ -59,6 +60,27 @@ exports.create = async (req, res) => {
     }
 }
 
+exports.getSources = async (req, res) => {
+    if (token.verifyToken(req)) {
+        const username = req.headers.username;
+        const user = await User.findOne({ username }).lean()
+        if (!user) {
+            res.send({ message: 'error' });
+            return;
+        }
+        const sources = Sources.findById(user.sources).then(data => {
+            console.log(data)
+            res.send(data)
+        })
+        // console.log(sources)
+        // res.send(JSON.stringify(sources.options))
+        return;
+    }
+    res.status(401).send()
+    return;
+}
+
+
 exports.test = (req, res) => {
     User.find().then(data => {
         res.send(data);
@@ -66,10 +88,10 @@ exports.test = (req, res) => {
 }
 
 exports.token = (req, res) => {
- if (token.verifyToken(req)) {
-    res.send('GOOD TOKEN\n')
- }
- else {
-    res.send('BAD TOKEN\n')
- }
+    if (token.verifyToken(req)) {
+        res.send('GOOD TOKEN\n')
+    }
+    else {
+        res.send('BAD TOKEN\n')
+    }
 }

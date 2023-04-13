@@ -32,7 +32,7 @@ export const createUser = async (username, password) => {
         console.log(error.response)
         return 'error';
     })
-    return response;
+    return response
 }
 
 export const disconnect = (setAuthToken) => {
