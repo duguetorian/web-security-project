@@ -47,8 +47,6 @@ async function runPythonScript(link, lastUpdatedAt=null, etag=null) {
   });
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 async function checkDocumentExists(model, query) {
   try {
     const result = await model.findOne(query);
@@ -141,8 +139,6 @@ async function refreshSource(sourceId) {
     return { success: 404 }
   }
 }
-=======
->>>>>>> 26f96611 (Add the API for articles:)
 
 // Create and Save a new Source
 exports.create = async (req, res) => {
