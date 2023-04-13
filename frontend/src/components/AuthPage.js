@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Segment, Header, Grid, Form, Button, Modal } from 'semantic-ui-react';
 import useAuthToken from '../hooks/useAuthToken';
-import { authenticate } from '../js/auth';
+import { authenticate, createUser } from '../js/auth';
 import duck from '../ressources/dance-dancing-duck.gif';
 
 const linkButtonStyle = {
@@ -24,19 +24,34 @@ function AuthPage() {
     let [newUsername, setNewUsername] = useState("");
     let [newPassword, setNewPassword] = useState("");
     let [confPassword, setConfPassword] = useState("");
+    let [userAlreadyExists, setUserAlreadyExists] = useState(false);
+    let [randomError, setRandomError] = useState(false);
 
-    let { authToken, setAuthToken } = useAuthToken();
+    let [failedAuth, setFailedAuth] = useState(false);
+
+    let { setAuthToken } = useAuthToken();
     const navigate = useNavigate();
 
-    function handleSubmitAuth(event) {
-        authenticate(username, password, setAuthToken);
-        navigate('/logged', { replace: true });
+    async function handleSubmitAuth() {
+        if (await authenticate(username, password, setAuthToken)) {
+            navigate('/logged', { replace: true });
+            return;
+        }
+        setFailedAuth(true);
     }
 
-    function handleSubmitSignUp(event) {
-        // To change to sign up route
-        authenticate(username, password, setAuthToken);
-        handleCLoseModale();
+    async function handleSubmitSignUp() {
+        const response = await createUser(newUsername, newPassword);
+        if (response === 'ok') {
+            handleCLoseModale();
+            return;
+        }
+        if (response === 'error') {
+            setRandomError(true)
+            return;
+        }
+        setUserAlreadyExists(true)
+        return;
     }
 
     function disableSignUp() {
@@ -74,7 +89,7 @@ function AuthPage() {
                     </Grid.Row>
                     <Grid.Row>
                         <Grid.Column textAlign="left">
-                            <Form size='large' widths='equal' onSubmit={handleSubmitAuth}>
+                            <Form size='large' widths='equal' onSubmit={async () => await handleSubmitAuth()}>
                                 <Form.Field>
                                     <label>Username</label>
                                     <input placeholder="Username" value={username} onChange={(event) => setUsername(event.target.value)} />
@@ -83,6 +98,7 @@ function AuthPage() {
                                     <label>Password</label>
                                     <input type="password" placeholder='Password' value={password} onChange={(event) => setPassword(event.target.value)} />
                                 </Form.Field>
+                                {failedAuth && <span style={{ color: 'red' }}>Wrong username or wrong password</span>}
                                 <Button type="submit" floated='right'>Log In</Button>
                             </Form>
                         </Grid.Column>
@@ -97,7 +113,7 @@ function AuthPage() {
                             >
                                 <Modal.Header>Sign Up</Modal.Header>
                                 <Modal.Content>
-                                    <Form  widths='equal'>
+                                    <Form widths='equal'>
                                         <Form.Field>
                                             <label>Username</label>
                                             <input placeholder="Username" value={newUsername} onChange={(event) => setNewUsername(event.target.value)} />
@@ -110,13 +126,15 @@ function AuthPage() {
                                             <label>Confirm Password</label>
                                             <input type="password" placeholder='Confirm Password' value={confPassword} onChange={(event) => setConfPassword(event.target.value)} />
                                             {!checkIfPasswordConfirmed() && <span style={{ color: 'red', textDecoration: 'underline', textDecorationColor: 'red' }}>You must write the same password</span>}
+                                            {userAlreadyExists && <span style={{ color: 'red' }}>User already exists</span>}
+                                            {randomError && <span style={{ color: 'red' }}>An error as occured</span>}
                                         </Form.Field>
                                     </Form>
                                 </Modal.Content>
-                                    <Modal.Actions>
-                                        <Button positive disabled={disableSignUp()} onClick={handleSubmitSignUp}>Sign Up</Button>
-                                        <Button negative onClick={handleCLoseModale}>Cancel</Button>
-                                    </Modal.Actions>
+                                <Modal.Actions>
+                                    <Button positive disabled={disableSignUp()} onClick={async () => await handleSubmitSignUp()}>Sign Up</Button>
+                                    <Button negative onClick={handleCLoseModale}>Cancel</Button>
+                                </Modal.Actions>
                             </Modal>
                         </Grid.Column>
                     </Grid.Row>

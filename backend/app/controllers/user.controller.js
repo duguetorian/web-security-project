@@ -13,12 +13,12 @@ const verifyUserLogin = async (username, password) => {
         }
         if (await bcrypt.compare(password, user.password)) {
             // creating a JWT token
-            token = jwt.sign({ id: user._id, username: user.username, type: 'user' }, JWT_SECRET, { expiresIn: '2h' })
-            return { status: 'ok', token }
+            const jwtoken = jwt.sign({ id: user._id, username: user.username, type: 'user' }, JWT_SECRET, { expiresIn: '2h' })
+            return { status: 'ok', jwtoken, username: user.username }
         }
         return { status: 'error', error: 'invalid password' }
     } catch (error) {
-        console.log(error);
+        console.log('ERROR: ', error);
         return { status: 'error', error: 'timed out' }
     }
 }
@@ -28,13 +28,12 @@ exports.authenticate = async (req, res) => {
     const { username, password } = req.body;
 
     const response = await verifyUserLogin(username, password);
-    console.log(response);
 
     if (response.status === 'ok') {
-        res.send({ username, token: response.token });
+        res.send({ username: response.username, token: response.jwtoken, message: 'ok' });
     }
     else {
-        res.status(401).send({ message: "Wrong username or wrong password" });
+        res.send({ message: "Wrong username or wrong password" });
     }
 };
 
@@ -49,13 +48,13 @@ exports.create = async (req, res) => {
             password,
             sources
         })
-        res.send('succes')
+        res.send({ message: 'ok' })
     } catch (error) {
         console.log(JSON.stringify(error));
         if (error.code === 11000) {
-            return res.send({ status: 'error', error: 'User already exists' })
+            return res.send({ message: 'error', error: 'User already exists' })
         }
-        res.send({ status: 'error' })
+        res.send({ message: 'error' })
         throw error
     }
 }

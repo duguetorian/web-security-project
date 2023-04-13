@@ -51,7 +51,7 @@ function NTSH() {
 
 function RequireAuth({ children }) {
   let { authToken } = useAuthToken();
-  if (!authToken?.user) {
+  if (!authToken || !authToken.user) {
     return <Navigate replace to='/login' />;
   }
   return <>
