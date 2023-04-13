@@ -4,8 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+// import * as dotenv from 'dotenv'
 
 import 'semantic-ui-css/semantic.min.css'
+// dotenv.config()
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
