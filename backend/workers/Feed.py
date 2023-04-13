@@ -82,8 +82,14 @@ class Feed:
                 entry_id = entries[i].id
 
                 # Entry link
-                entry_link = entries[i].link
-            
+                entry_link = ""
+                if "link" in entries[i]:
+                    entry_link = entries[i].link
+                elif "links" in entries[i]:
+                    if type(entries[i]["links"]) == list and len(entries[i]["links"]) > 0:
+                        if "href" in entries[i]["links"][0]:
+                            entry_link = entries[i]["links"][0]["href"]
+
                 # Entry title
                 entry_title = entries[i].title
 
