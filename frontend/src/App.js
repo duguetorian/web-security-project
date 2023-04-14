@@ -24,6 +24,11 @@ function App() {
             <ArticlePage />
           </RequireAuth>
         } />
+        <Route path='/source/:uuid' element={
+          <RequireAuth>
+
+          </RequireAuth>
+        }/>
         <Route path="*" element={<NTSH />} />
       </Routes>
       <Routes />
