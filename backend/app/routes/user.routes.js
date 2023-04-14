@@ -12,6 +12,9 @@ module.exports = app => {
     // Get all sources linked to user
     router.get("/sources", user.getSources)
 
+    // Unsubscribe from a source
+    router.post("/unsubscribe", user.unsubscribe);
+
     // See users
     router.get("/", user.test);
 

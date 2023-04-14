@@ -66,7 +66,6 @@ async function refreshSource(sourceId) {
   const source = await Source.findById(sourceId); // TODO: add error if no source found.
   if (source && source.status != "gone") {
     const result = await runPythonScript(link = source.link, modified = source.updatedAt.toISOString(), etag = source.etag);
-    console.debug(result.source, result.status, result.articles.length);
     if (result["error"] == 0) {
 
       let updatedSource = { updatedAt: result["source"]["updatedAt"] }
@@ -165,13 +164,10 @@ exports.create = async (req, res) => {
     });
   }
   if (sourceExists.status === 0) {
-    const user = await User.findOne({ username: req.headers.username });
+    let user = await User.findOne({ username: req.headers.username });
     user.sources.addToSet(sourceExists.source._id);
     await user.save();
     return res.send(sourceExists.source);
-    // return res.status(409).send({
-    //   message: "The source already exists."
-    // });
   }
 
   // The source does not exist in the database
@@ -289,7 +285,13 @@ exports.update = (req, res) => {
 
 // Delete a Source with the specified id in the request
 exports.delete = (req, res) => {
-  const id = req.params.id;
+
+  const id = req.params?.id;
+  if (!id) {
+    res.status(404).send({
+      message: "Id not specified."
+    });
+  }
 
   Source.findByIdAndRemove(id)
     .then(data => {
@@ -317,10 +319,9 @@ exports.refresh = async (req, res) => {
 
   if (!sourceIds || !Array.isArray(sourceIds)) {
     console.error("Error in 'sourceIds' field.");
-    res.status(404).send({
+    return res.status(404).send({
       message: "Error in 'sourceIds' field."
     });
-    return;
   }
   const response = [];
 
@@ -331,5 +332,5 @@ exports.refresh = async (req, res) => {
       response.push(refreshedSourceOutput);
     }
   }
-  res.send({ result: response });
+  return res.send({ result: response });
 }
