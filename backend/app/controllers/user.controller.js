@@ -68,8 +68,7 @@ exports.getSources = async (req, res) => {
             res.send({ message: 'error' });
             return;
         }
-        const sources = Sources.findById(user.sources).then(data => {
-            console.log(data)
+        const sources = Sources.find({ '_id': { $in: user.sources } }).then(data => {
             res.send(data)
         })
         // console.log(sources)

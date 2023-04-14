@@ -40,7 +40,7 @@ function NavBar({ children }) {
 
     useEffect(() => {
         generateSourceContent(authToken.user, authToken.token)
-    })
+    }, [])
 
     const menuRef = useRef();
     const [menuWidth, setMenuWidth] = useState('20vw');
@@ -65,23 +65,6 @@ function NavBar({ children }) {
                             Home
                         </Header>
                         <Menu.Menu>
-                            {/* <Menu.Item
-                        name='communities'
-                        onClick={handleItemClick}
-                        active={activeItem === "communities"}
-                        >
-                        <Accordion inverted fluid>
-                        <Accordion.Title
-                        active={activeItem === "communities"}
-                        index={0}
-                        onClick={handleItemClick}>
-                        Communities
-                        </Accordion.Title>
-                        <Accordion.Content>
-                        test
-                        </Accordion.Content>
-                        </Accordion>
-                    </Menu.Item> */}
                             <Menu.Item
                                 name='source'
                             >
@@ -93,9 +76,9 @@ function NavBar({ children }) {
                                         Source
                                     </Accordion.Title>
                                     <Accordion.Content content={
-                                        <List divided inverted >
+                                        <List divided>
                                             {sourceContent.map((content) => (
-                                                <List.Item as="a" key={content.id}>{content.name}</List.Item>
+                                                <List.Item as="a" key={content.id} disabled={content.disabled}>{content.title}</List.Item>
                                             ))}
                                         </List>
                                     } active={activeItem === "source"}
@@ -109,11 +92,6 @@ function NavBar({ children }) {
                             Browse
                         </Header>
                         <Menu.Menu>
-                            {/* <Menu.Item
-                        name='discover'
-                        onClick={handleItemClick}
-                        active={activeItem === "discover"}
-                    /> */}
                             <Menu.Item
                                 name='add'
                             >

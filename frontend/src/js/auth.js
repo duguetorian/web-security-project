@@ -35,8 +35,8 @@ export const createUser = async (username, password) => {
     return response
 }
 
-export const disconnect = (setAuthToken) => {
-    setAuthToken({ user: null, token: null })
+export const disconnect = () => {
+    sessionStorage.clear()
     window.location.reload(true);
     return "success"
 }

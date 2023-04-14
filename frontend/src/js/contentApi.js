@@ -1,5 +1,6 @@
 import data from '../rss_example.json';
 import axios from 'axios';
+import { disconnect } from './auth';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -57,11 +58,13 @@ let sourceContent = [
 
 export const getSources = async (username, token) => {
     const response = await axios.get(`${API_URL}/api/user/sources`, { headers: { authorization: token, username } }).then(response => {
-        console.log('RESPONSE SOURCES: ', response)
         return response;
-    }).catch(error => console.log('ERROR SOURCES: ', error.response))
+    }).catch(error => {})
+    if (response.data.length === 0) {
+        return [{ link: '000', title: 'You need to add sources ...', disabled: true }];
+    }
+    console.log('SOURCES: ', response.data);
     return response.data;
-    return sourceContent;
 }
 
 export const addSource = async (username, token, link) => {
@@ -69,6 +72,10 @@ export const addSource = async (username, token, link) => {
     try {
         let domain = new URL(link)
         const response = await axios.post(`${API_URL}/api/source/`, { link }, { headers }).then(response => {
+            if (response.status === 200) {
+                return response;
+            }
+            disconnect()
             return response;
         })
         return response
