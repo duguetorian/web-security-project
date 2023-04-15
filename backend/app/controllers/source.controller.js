@@ -3,6 +3,7 @@ const token = require('../helpers/token');
 const Source = db.sources;
 const Article = db.articles;
 const User = db.user;
+const ObjectId = db.mongoose.Types.ObjectId;
 
 const { spawn } = require("child_process");
 
@@ -221,7 +222,7 @@ exports.create = async (req, res) => {
   }
 };
 
-// Retrieve all Source from the database.
+// Retrieve all Source from the database that belong to the user.
 exports.findAll = (req, res) => {
   const title = req.query.title;
   var condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {};
@@ -240,21 +241,46 @@ exports.findAll = (req, res) => {
 };
 
 // Find a single Source with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
+exports.findOne = async (req, res) => {
 
-  Source.findById(id)
-    .then(data => {
-      if (!data)
-        res.status(404).send({ message: "Not found Source with id " + id });
-      else res.send(data);
+  if (token.verifyToken(req)) {
+    const sourceIdToFind = new ObjectId(req.params.id);
+    const username = req.headers.username;
+
+    await User.findOne({ username })
+    .then(user => {
+      if (!user) {
+        console.log( `User ${user.username} not found` );
+        return res.status(404).send( { message: "User not found"} );
+      }
+      Source.findById(sourceIdToFind)
+      .then(source => {
+        if (!source) {
+          console.log( `Source with id ${sourceIdToFind} not found` );
+          return res.status(404).send({ message: "Source not found" });
+        }
+        if (user.sources.indexOf(sourceIdToFind) !== -1) {
+          return res.send(source);
+        }
+        console.log( `User ${username} tried to access source with id ${sourceIdToFind} that he is not following` );
+        return res.status(404).send( {message: "User is not following the source"} );
+      })
+      .catch(err => {
+        res
+          .status(500)
+          .send({ message: "Error retrieving source with id=" + sourceIdToFind });
+      });
     })
     .catch(err => {
+      console.error(err);
       res
         .status(500)
-        .send({ message: "Error retrieving Source with id=" + id });
+        .send({ message: `Error retrieving user ${username}` });
     });
-
+    return;
+  }
+  console.log(`User with username '${req.headers.username}' tried to access source ${req.params.id} but wasn't authenticated.`);
+  return res.status(401).send( {message: "User not allowed"} );
 };
 
 // Update a Source by the id in the request
@@ -266,7 +292,12 @@ exports.update = (req, res) => {
     });
   }
 
-  const id = req.params.id;
+  const id = req.params?.id;
+  if (!id) {
+    res.status(404).send({
+      message: "Source id not specified."
+    });
+  }
 
   Source.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
     .then(data => {
@@ -289,7 +320,7 @@ exports.delete = (req, res) => {
   const id = req.params?.id;
   if (!id) {
     res.status(404).send({
-      message: "Id not specified."
+      message: "Source id not specified."
     });
   }
 
