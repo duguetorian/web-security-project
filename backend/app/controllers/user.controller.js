@@ -5,6 +5,7 @@ const token = require('../helpers/token');
 const User = db.user;
 const Sources = db.sources;
 const JWT_SECRET = process.env.JWT;
+const ObjectId = db.mongoose.Types.ObjectId;
 
 const verifyUserLogin = async (username, password) => {
     try {
@@ -39,6 +40,10 @@ exports.authenticate = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
+    if (!("username" in req.body &&  "password" in req.body)) {
+        console.error( "Error in request to create user, no username or password given" );
+        return res.status(401).send({ message: "error", error: "No username or password found in request." });
+    }
     const { username, password: plainTextPassword } = req.body;
 
     const password = await bcrypt.hash(plainTextPassword, 10);
@@ -49,11 +54,11 @@ exports.create = async (req, res) => {
             password,
             sources
         })
-        res.send({ message: 'ok' })
+        res.send({ message: "ok" })
     } catch (error) {
         console.log(JSON.stringify(error));
         if (error.code === 11000) {
-            return res.send({ message: 'error', error: 'User already exists' })
+            return res.send({ message: "error", error: "User already exists" })
         }
         res.send({ message: 'error' })
         throw error
@@ -65,18 +70,45 @@ exports.getSources = async (req, res) => {
         const username = req.headers.username;
         const user = await User.findOne({ username }).lean()
         if (!user) {
-            res.send({ message: 'error' });
+            res.send({ message: "error" });
             return;
         }
-        const sources = Sources.find({ '_id': { $in: user.sources } }).then(data => {
+        const sources = Sources.find({ "_id": { $in: user.sources } }).then(data => {
             res.send(data)
         })
-        // console.log(sources)
-        // res.send(JSON.stringify(sources.options))
         return;
     }
-    res.status(401).send()
-    return;
+    return res.status(401).send({message: "Cannot access sources"});
+}
+
+exports.unsubscribe = async (req, res) => {
+
+    if (token.verifyToken(req)) {
+        const sourceToRemove = req.body.sourceId;
+        if (!sourceToRemove) {
+            console.error("No 'sourceId' field found in request");
+            return res.status(404).send({
+              message: "No 'sourceId' field found."
+            });
+        }
+        const username = req.headers.username;
+        const sourceIdToRemove = new ObjectId(sourceToRemove);
+        User.updateOne({ username: username }, { $pull: { sources: sourceIdToRemove } })
+        .then (user => {
+            if (user) {
+                console.log(`User '${username}' sources updated`);
+            }
+            else {
+                console.error("No user found");
+            }
+        })
+        .catch((error) => {
+            console.log(`Error updating user sources: ${error}`);
+            return res.status(500).send({ message: `Error while updating ${username} sources.` });
+        });
+        return res.send({ message: `Sources for user ${username} updated.` });
+    }
+    return res.status(401).send( {message: "Cannot access sources"} );
 }
 
 
