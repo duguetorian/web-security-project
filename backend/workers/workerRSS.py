@@ -12,7 +12,7 @@ BAD_RSS_FORMAT = -1
 PATTERN_DATE = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z'
 
 def getFeed(link:str, modified:str, etag:str) -> feedparser:
-    return feedparser.parse(link, modified=modified, etag=etag)
+    return feedparser.parse(link, modified=modified, etag=etag, sanitize_html=False)
 
 def process(raw_data:feedparser) -> Feed:
     feed = Feed(raw_data.status)
