@@ -34,7 +34,7 @@ function AuthPage() {
 
     async function handleSubmitAuth() {
         if (await authenticate(username, password, setAuthToken)) {
-            navigate('/logged', { replace: true });
+            navigate('/home', { replace: true });
             return;
         }
         setFailedAuth(true);
@@ -105,7 +105,8 @@ function AuthPage() {
                     </Grid.Row>
                     <Grid.Row>
                         <Grid.Column>
-                            You don't have an account ? <Modal
+                            You don't have an account ? 
+                            <Modal
                                 onCLose={() => setSignUp(false)}
                                 onOpen={() => setSignUp(true)}
                                 open={signup}
