@@ -49,7 +49,7 @@ function HomePage() {
     }, [range, offset, sourceId]);
 
     useEffect(() => {
-        setLoadedArticles(articles ? articles.length !== 0 : 'loader');
+        setLoadedArticles(articles.length !== 0);
     }, [articles])
 
     useEffect(() => {

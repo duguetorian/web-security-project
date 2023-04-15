@@ -49,7 +49,7 @@ const handleErrorStatus = error => {
         return null;
     }
     else {
-        // disconnect();
+        disconnect();
         console.log('error: ', error)
         return error;
     }
