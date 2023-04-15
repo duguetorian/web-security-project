@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { List, Pagination, Segment, Header, Icon, Dropdown, Popup, Modal } from 'semantic-ui-react';
+import { List, Pagination, Segment, Header, Icon, Dropdown, Popup, Modal, Dimmer, Loader } from 'semantic-ui-react';
 import { getArticlesFromSourceId, getLastArticles } from '../js/contentApi';
 import useAuthToken from '../hooks/useAuthToken';
 import useSourceIdContext from '../hooks/useSourceIdContext';
+
 
 const rangeEnum = {
     0: 5,
@@ -24,7 +25,7 @@ function HomePage() {
 
     const [detailedArticle, setDetailedArticle] = useState(null);
 
-    const [noArticles, setNoArticles] = useState(true);
+    const [loadedArticles, setLoadedArticles] = useState('loader');
 
     const { authToken } = useAuthToken();
 
@@ -45,12 +46,15 @@ function HomePage() {
         }
         fetchData();
 
-        setNoArticles(articles.length === 0);
     }, [range, offset, sourceId]);
 
     useEffect(() => {
+        setLoadedArticles(articles.length !== 0);
+    }, [articles])
+
+    useEffect(() => {
         const updateMaxLength = () => {
-            if (!noArticles) {
+            if (loadedArticles) {
                 const listWidth = listRef.current.offsetWidth;
                 const charWidth = 6.5;
                 const calculatedMaxLength = Math.floor(listWidth / charWidth);
@@ -73,10 +77,13 @@ function HomePage() {
 
     return (
         <>
+            <Dimmer active={loadedArticles === 'loader'}>
+                <Loader />
+            </Dimmer>
             {
-                noArticles && <Header size='huge'>You need to subscribe to RSS sources !!</Header>
+                !loadedArticles && <Header size='huge'>You need to subscribe to RSS sources !!</Header>
             }
-            {!noArticles && <>
+            {loadedArticles && <>
                 <Segment textAlign='left' style={{ position: 'sticky', top: 0, zIndex: 999, marginTop: '2vh', display: 'flex', justifyContent: 'space-between' }} inverted>
                     {sourceId && (
                         <div style={{ width: '90%' }}>
