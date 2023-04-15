@@ -19,7 +19,6 @@ const verifyUserLogin = async (username, password) => {
         }
         return { status: 'error', error: 'invalid password' }
     } catch (error) {
-        console.log('ERROR: ', error);
         return { status: 'error', error: 'timed out' }
     }
 }
@@ -51,7 +50,6 @@ exports.create = async (req, res) => {
         })
         res.send({ message: 'ok' })
     } catch (error) {
-        console.log(JSON.stringify(error));
         if (error.code === 11000) {
             return res.send({ message: 'error', error: 'User already exists' })
         }
@@ -71,8 +69,6 @@ exports.getSources = async (req, res) => {
         const sources = Sources.find({ '_id': { $in: user.sources } }).then(data => {
             res.send(data)
         })
-        // console.log(sources)
-        // res.send(JSON.stringify(sources.options))
         return;
     }
     res.status(401).send()

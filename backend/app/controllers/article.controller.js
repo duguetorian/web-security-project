@@ -1,5 +1,7 @@
 const db = require("../models");
+const token = require('../helpers/token');
 const Article = db.articles;
+const User = db.user;
 
 // Find a single Article with an id
 exports.findOne = (req, res) => {
@@ -20,7 +22,7 @@ exports.findOne = (req, res) => {
 
 // Update a Article by the id in the request
 exports.update = (req, res) => {
-  
+
   if (!req.body) {
     return res.status(400).send({
       message: "Data to update can not be empty!"
@@ -47,7 +49,7 @@ exports.update = (req, res) => {
 // Delete an Article with the specified id in the request
 exports.delete = (req, res) => {
   const id = req.params.id;
-  
+
   Article.findByIdAndRemove(id)
     .then(data => {
       if (!data) {
@@ -68,16 +70,62 @@ exports.delete = (req, res) => {
 };
 
 // Find the Articles related to a source
-exports.findFromSource = (req, res) => {
-    const id = req.params.id;
-    Article.find({ sourceId: id })
-      .then(data => {
-        res.send(data);
-      })
-      .catch(err => {
-        res.status(500).send({
-          message:
-            err.message || "Some error occurred while retrieving tutorials."
-        });
+exports.findFromSource = async (req, res) => {
+  if (!token.verifyToken(req)) {
+    res.status(401).send()
+    return;
+  }
+
+  const id = req.params.id;
+  const range = req.params.range;
+  const offset = req.params.offset;
+
+  const count = await Article.countDocuments({ sourceId: id }).then(response => response);
+
+  await Article.find({ sourceId: id })
+    .sort({ publishedAt: -1 })
+    .skip(offset)
+    .limit(range)
+    .then(data => {
+      res.send({ data, count });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving tutorials."
       });
-  };
+    });
+};
+
+exports.findLatestArticles = async (req, res) => {
+  if (!token.verifyToken(req)) {
+    res.status(401).send()
+    return;
+  }
+
+  const username = req.headers.username;
+  const sourceIds = await User.findOne({ username }).then(data => {
+    return data.sources;
+  });
+
+  const range = req.params.range;
+  const offset = req.params.offset;
+
+  const count = await Article.countDocuments({ sourceId: { $in: sourceIds } }).lean();
+
+  await Article.find({ sourceId: { $in: sourceIds } })
+    .sort({ publishedAt: -1 })
+    .skip(offset)
+    .limit(range)
+    .then(data => res.send({ data, count }))
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving the articles."
+      });
+    })
+}
+
+exports.findAllArticles = async (req, res) => {
+  Article.find().then(data => res.send(data))
+}

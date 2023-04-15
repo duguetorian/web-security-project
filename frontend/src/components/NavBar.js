@@ -4,11 +4,15 @@ import duck from '../ressources/dance-dancing-duck.gif';
 import useAuthContext from '../hooks/useAuthToken';
 import { disconnect } from '../js/auth';
 import { addSource, getSources } from '../js/contentApi';
+import useSourceIdContext from '../hooks/useSourceIdContext';
 
 
 function NavBar({ children }) {
 
     const [activeItem, setActiveItem] = useState(null);
+
+    const { setSourceId, setSourceTitle } = useSourceIdContext();
+
     const [sourceContent, setSourceContent] = useState([]);
     const [newSourceLink, setNewSourceLink] = useState("");
     const [newSourceError, setNewSourceError] = useState(false);
@@ -61,9 +65,11 @@ function NavBar({ children }) {
                         </p>
                     </Header>
                     <Menu.Item>
-                        <Header as="h3" inverted>
-                            Home
-                        </Header>
+                        <Menu.Item onClick={() => setSourceId(null)}>
+                            <Header as="h3" inverted>
+                                Home
+                            </Header>
+                        </Menu.Item>
                         <Menu.Menu>
                             <Menu.Item
                                 name='source'
@@ -78,7 +84,20 @@ function NavBar({ children }) {
                                     <Accordion.Content content={
                                         <List divided>
                                             {sourceContent.map((content) => (
-                                                <List.Item as="a" key={content.id} disabled={content.disabled}>{content.title}</List.Item>
+                                                <List.Item
+                                                    as="a"
+                                                    key={content.id}
+                                                    onClick={() => {
+                                                        if (content.id !== '000') {
+                                                            setSourceId(content.id);
+                                                            setSourceTitle(content.title);
+                                                            return;
+                                                        }
+                                                        setActiveItem('subscribe');
+                                                    }}
+                                                >
+                                                    {content.title}
+                                                </List.Item>
                                             ))}
                                         </List>
                                     } active={activeItem === "source"}
@@ -93,17 +112,17 @@ function NavBar({ children }) {
                         </Header>
                         <Menu.Menu>
                             <Menu.Item
-                                name='add'
+                                name='subscribe'
                             >
                                 <Accordion inverted>
                                     <Accordion.Title
-                                        name="add"
+                                        name="subscribe"
                                         onClick={handleItemClick}
                                     >
-                                        Add
+                                        Subscribe
                                     </Accordion.Title>
                                     <Accordion.Content
-                                        active={activeItem === "add"}
+                                        active={activeItem === "subscribe"}
                                     >
                                         <Input
                                             placeholder='http://my.rss.link.com'

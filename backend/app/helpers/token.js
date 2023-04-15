@@ -12,7 +12,6 @@ exports.verifyToken = (req) => {
         const verify = jwt.verify(token, JWT_SECRET);
         return (verify && verify.type === 'user' && verify.username === username)
     } catch (error) {
-        console.log(JSON.stringify(error), "error");
         return false;
     }
 }

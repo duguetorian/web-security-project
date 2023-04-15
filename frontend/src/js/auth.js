@@ -20,7 +20,6 @@ export const authenticate = async (username, password, setAuthToken) => {
 
 export const createUser = async (username, password) => {
     const response = await axios.post(`${API_URL}/api/user/create`, { username, password }).then(response => {
-        console.log('RESPONSE: ', response, '\nTEST: ', response.data.message === 'ok')
         if (response.data.message === 'ok') {
             return 'ok';
         }
