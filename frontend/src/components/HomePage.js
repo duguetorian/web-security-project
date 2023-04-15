@@ -70,6 +70,7 @@ function HomePage() {
         setOffset(offset + range);
         setActivePage(activePage);
     }
+
     return (
         <>
             {
