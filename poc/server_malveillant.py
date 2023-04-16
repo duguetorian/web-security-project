@@ -15,7 +15,7 @@ fg.description("This feed inject a XSS, or at least try.")
 # Add some entries to the feed
 fe = fg.add_entry()
 fe.id('http://localhost:8000/download_malware')
-fe.title('<img src="http://unsplash.it/10/100?random" onload="console.log(`I come from the title of this article`);" />')
+fe.title('Title for malicious entry')
 fe.summary('<img onload="console.log(`And I come from the description ...`)" src="http://unsplash.it/100/100?random"/>')
 fe.link(href='http://localhost:8000/download_malware', rel='alternate')
 fe.pubDate('2023-04-15T08:00:00Z')
