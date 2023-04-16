@@ -9,10 +9,16 @@ COPY ["package.json", "package-lock.json", "./"]
 
 COPY workers/*.py ./workers/
 
+COPY requirements.txt .
+
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+RUN pip3 install --no-cache-dir -r requirements.txt
+
 RUN npm install --production
 
 COPY . .
 
-EXPOSE 8080
+EXPOSE 5000
 
 CMD ["node", "server.js"]
