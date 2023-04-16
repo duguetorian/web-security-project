@@ -2,11 +2,11 @@ import { useContext } from 'react';
 import { SourceIdContext } from "../context/SourceIdContext";
 
 const useSourceIdContext = () => {
-    const sourceId = useContext(SourceIdContext);
-    if (sourceId === undefined) {
+    const source = useContext(SourceIdContext);
+    if (source === undefined) {
         throw new Error("useSourceIdContext can only be used inside AuthProvider");
     }
-    return sourceId;
+    return source;
 };
 
 export default useSourceIdContext;

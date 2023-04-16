@@ -11,13 +11,13 @@ function NavBar({ children }) {
 
     const [activeItem, setActiveItem] = useState(null);
 
-    const { setSourceId, setSourceTitle } = useSourceIdContext();
+    const { sourceId, setSourceId, setSourceTitle, setSourceLink } = useSourceIdContext();
 
     const [sourceContent, setSourceContent] = useState([]);
     const [newSourceLink, setNewSourceLink] = useState("");
     const [newSourceError, setNewSourceError] = useState(false);
 
-    const handleItemClick = (e, { name }) => {
+    const handleItemClick = async (e, { name }) => {
         if (activeItem !== name) {
             setActiveItem(name);
             return
@@ -27,24 +27,26 @@ function NavBar({ children }) {
 
     const { authToken, setAuthToken } = useAuthContext();
 
-    async function generateSourceContent(username, token) {
-        setSourceContent(await getSources(username, token))
+    async function generateSourceContent(authToken) {
+        setSourceContent(await getSources(authToken))
     }
 
-    function handleNewSource() {
-        const newSource = addSource(authToken.user, authToken.token, newSourceLink)
+    async function handleNewSource() {
+        const newSource = addSource(authToken, newSourceLink)
         if (!newSource) {
             setNewSourceError(true);
             return;
         }
-        generateSourceContent(authToken.user, authToken.token);
         setNewSourceLink("");
-        setActiveItem("source")
+        generateSourceContent(authToken).then(() => setActiveItem("source"));
+        setSourceId(false);
     }
 
     useEffect(() => {
-        generateSourceContent(authToken.user, authToken.token)
-    }, [])
+        if (activeItem === "source") {
+            generateSourceContent(authToken)
+        }
+    }, [activeItem, sourceId])
 
     const menuRef = useRef();
     const [menuWidth, setMenuWidth] = useState('20vw');
@@ -91,6 +93,7 @@ function NavBar({ children }) {
                                                         if (content.id !== '000') {
                                                             setSourceId(content.id);
                                                             setSourceTitle(content.title);
+                                                            setSourceLink(content.link);
                                                             return;
                                                         }
                                                         setActiveItem('subscribe');

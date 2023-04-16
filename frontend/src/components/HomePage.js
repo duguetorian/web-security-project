@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { List, Pagination, Segment, Header, Icon, Dropdown, Popup, Modal, Dimmer, Loader } from 'semantic-ui-react';
-import { getArticlesFromSourceId, getLastArticles } from '../js/contentApi';
+import { List, Pagination, Segment, Header, Icon, Dropdown, Popup, Modal, Dimmer, Loader, Button } from 'semantic-ui-react';
+import { getArticlesFromSourceId, getLastArticles, unsubscribeFromSource } from '../js/contentApi';
 import useAuthToken from '../hooks/useAuthToken';
 import useSourceIdContext from '../hooks/useSourceIdContext';
 
@@ -21,7 +21,8 @@ function HomePage() {
     const [numberOfPages, setNumberOfPages] = useState(1);
 
     const [articles, setArticles] = useState([]);
-    const { sourceId, sourceTitle } = useSourceIdContext();
+    const { sourceId, sourceTitle, sourceLink, setSourceId, setSourceTitle } = useSourceIdContext();
+    const [unsubscribe, setUnsubscribe] = useState(false);
 
     const [detailedArticle, setDetailedArticle] = useState(null);
 
@@ -66,8 +67,11 @@ function HomePage() {
         return () => window.removeEventListener('resize', updateMaxLength);
     });
 
-    const handleUnsubscribe = (sourceId) => () => {
-        alert('UNSUBSCRIBED');
+    const handleUnsubscribe = (sourceId) => async () => {
+        await unsubscribeFromSource(authToken, sourceId);
+        setSourceId(null);
+        setSourceTitle('');
+        setUnsubscribe(false);
     }
 
     const handlePageChange = (e, { activePage }) => {
@@ -89,8 +93,25 @@ function HomePage() {
                         <div style={{ width: '90%' }}>
                             <b>{sourceTitle}</b>
                             <Popup content={`Unsubscribe from ${sourceTitle}`} trigger={
-                                <Icon name='trash' style={{ marginLeft: '10px' }} onClick={handleUnsubscribe(sourceId)} />
+                                <Icon name='trash' style={{ marginLeft: '10px' }} onClick={() => setUnsubscribe(true)} />
                             } />
+                            <Modal
+                                open={unsubscribe}
+                                dimmer='blurring'
+                                onClose={() => setUnsubscribe(false)}
+                            >
+                                <Modal.Header>
+                                    Do you really want to unsubscribe from {sourceTitle} ?
+                                </Modal.Header>
+                                <Modal.Content>
+                                    You will loose all the articles of this source.
+                                    You can always subscribe again by adding this link to your account: <a href={sourceLink}>{sourceLink}</a>
+                                </Modal.Content>
+                                <Modal.Actions>
+                                    <Button onClick={() => setUnsubscribe(false)}>Cancel</Button>
+                                    <Button negative onClick={handleUnsubscribe(sourceId)}>Unsubscribe</Button>
+                                </Modal.Actions>
+                            </Modal>
                         </div>
                     )}
                     {!sourceId && (

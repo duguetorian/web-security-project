@@ -3,8 +3,9 @@ import { disconnect } from './auth';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export const getSources = async (username, token) => {
-    const data = await axios.get(`${API_URL}/api/user/sources`, { headers: { authorization: token, username } }).then(response => {
+export const getSources = async (authToken) => {
+    const headers = { username: authToken.user, authorization: authToken.token };
+    const data = await axios.get(`${API_URL}/api/user/sources`, { headers }).then(response => {
         return response.data;
     }).catch(handleErrorStatus)
     if (data.length === 0) {
@@ -13,8 +14,8 @@ export const getSources = async (username, token) => {
     return data;
 }
 
-export const addSource = async (username, token, link) => {
-    const headers = { username, authorization: token };
+export const addSource = async (authToken, link) => {
+    const headers = { username: authToken.user, authorization: authToken.token };
     try {
         new URL(link)
         const response = await axios.post(`${API_URL}/api/source/`, { link }, { headers }).then(response => {
@@ -40,6 +41,13 @@ export const getArticlesFromSourceId = async (authToken, range, offset, sourceId
         return response.data
     }).catch(handleErrorStatus)
     return data
+}
+
+export const unsubscribeFromSource = async (authToken, sourceId) => {
+    const headers = { username: authToken.user, authorization: authToken.token };
+    const response = await axios.post(`${API_URL}/api/user/unsubscribe`, { sourceId }, { headers }).then(response => response)
+        .catch(handleErrorStatus);
+    return response;
 }
 
 const handleErrorStatus = error => {
