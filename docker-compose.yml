@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  frontend:
+    env_file: ./frontend/.env
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+  backend:
+    env_file: ./backend/.env
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/feed_db
+    depends_on:
+      - mongo
+  mongo:
+    build: ./mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+
